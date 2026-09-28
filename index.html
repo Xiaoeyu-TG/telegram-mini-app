@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>数字转换器</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px 16px 30px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: var(--tg-theme-bg-color, #f4f6f8);
+      color: var(--tg-theme-text-color, #222);
+    }
+    .wrap { max-width: 620px; margin: 0 auto; }
+    h1 { text-align: center; font-size: 24px; margin: 8px 0 6px; }
+    .sub { text-align: center; opacity: .65; font-size: 14px; margin-bottom: 22px; }
+    label { display: block; font-size: 14px; font-weight: 600; margin: 14px 0 8px; }
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      resize: vertical;
+      border: 1px solid var(--tg-theme-hint-color, #aaa);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 17px;
+      line-height: 1.6;
+      outline: none;
+      background: var(--tg-theme-secondary-bg-color, #fff);
+      color: var(--tg-theme-text-color, #222);
+    }
+    textarea:focus { border-color: var(--tg-theme-button-color, #2481cc); }
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 16px;
+      margin-top: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .primary {
+      background: var(--tg-theme-button-color, #2481cc);
+      color: var(--tg-theme-button-text-color, #fff);
+    }
+    .secondary {
+      background: var(--tg-theme-secondary-bg-color, #fff);
+      color: var(--tg-theme-text-color, #222);
+      border: 1px solid rgba(128,128,128,.3);
+    }
+    .tip {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 10px;
+      background: var(--tg-theme-secondary-bg-color, #fff);
+      font-size: 13px;
+      line-height: 1.6;
+      opacity: .8;
+    }
+    .status {
+      text-align: center;
+      min-height: 20px;
+      margin-top: 10px;
+      font-size: 13px;
+      opacity: .75;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>数字转换器</h1>
+  <div class="sub">空格、换行自动转换成英文逗号</div>
+
+  <label for="input">输入内容</label>
+  <textarea id="input" placeholder="例如：111 222 333&#10;也支持换行和多个空格"></textarea>
+
+  <button class="primary" id="convert">一键转换</button>
+
+  <label for="output">转换结果</label>
+  <textarea id="output" readonly placeholder="转换结果会显示在这里"></textarea>
+
+  <button class="secondary" id="copy">复制结果</button>
+
+  <div class="status" id="status"></div>
+
+  <div class="tip">
+    支持：多个空格、换行、中文逗号。<br>
+    示例：111&nbsp;&nbsp;222&nbsp;&nbsp;333 → 111,222,333
+  </div>
+</div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    if (tg.setHeaderColor) tg.setHeaderColor('secondary_bg_color');
+  }
+
+  const input = document.getElementById('input');
+  const output = document.getElementById('output');
+  const status = document.getElementById('status');
+
+  function convert() {
+    const value = input.value.trim();
+    if (!value) {
+      output.value = '';
+      status.textContent = '请先输入内容';
+      return;
+    }
+
+    // 空白字符（空格、Tab、换行等）以及中英文逗号统一为逗号
+    output.value = value
+      .replace(/[，,]+/g, ',')
+      .replace(/\s+/g, ',')
+      .replace(/,+/g, ',')
+      .replace(/^,|,$/g, '');
+
+    status.textContent = '转换完成';
+  }
+
+  document.getElementById('convert').addEventListener('click', convert);
+
+  document.getElementById('copy').addEventListener('click', async () => {
+    if (!output.value) convert();
+    if (!output.value) return;
+
+    try {
+      await navigator.clipboard.writeText(output.value);
+      status.textContent = '已复制到剪贴板';
+    } catch (e) {
+      output.select();
+      document.execCommand('copy');
+      status.textContent = '已复制到剪贴板';
+    }
+  });
+
+  // 输入时自动转换（保留按钮，也支持即时预览）
+  input.addEventListener('input', () => {
+    if (input.value.trim()) {
+      output.value = input.value.trim()
+        .replace(/[，,]+/g, ',')
+        .replace(/\s+/g, ',')
+        .replace(/,+/g, ',')
+        .replace(/^,|,$/g, '');
+      status.textContent = '';
+    } else {
+      output.value = '';
+      status.textContent = '';
+    }
+  });
+</script>
+</body>
+</html>
